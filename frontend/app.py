@@ -2,6 +2,7 @@ from textual.app import App, ComposeResult
 from textual.widgets import Header, Footer, Label, Input, Button, Static
 from textual.containers import VerticalScroll, Container
 from textual import work
+from textual.message import Message
 import pandas as pd
 from sklearn.neighbors import NearestNeighbors
 import random
@@ -134,7 +135,7 @@ class MovieRecApp(App):
         err = self.movie_model.load()
         self.post_message(self.ModelLoaded(err))
 
-    class ModelLoaded(App.Message):
+    class ModelLoaded(Message):
         def __init__(self, err: str | None) -> None:
             self.err = err
             super().__init__()
@@ -179,7 +180,7 @@ class MovieRecApp(App):
         recs = self.movie_model.get_recommendations(user_ratings)
         self.post_message(self.RecsComputed(recs))
 
-    class RecsComputed(App.Message):
+    class RecsComputed(Message):
         def __init__(self, recs: list) -> None:
             self.recs = recs
             super().__init__()
