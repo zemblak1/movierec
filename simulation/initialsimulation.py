@@ -3,14 +3,14 @@ from sklearn.neighbors import NearestNeighbors
 
 
 ratings = pd.read_csv(
-    "ml-100k/u1.base",
+    "../ml-100k/u1.base",
     sep="\t",
     names=["user_id", "movie_id", "rating", "timestamp"],
     usecols=["user_id", "movie_id", "rating"],
 )
 
 movies = pd.read_csv(
-    "ml-100k/u.item",
+    "../ml-100k/u.item",
     sep="|",
     encoding="latin-1",
     header=None,
