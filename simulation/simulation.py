@@ -5,7 +5,7 @@ from sklearn.neighbors import NearestNeighbors
 
 
 # These are the main parameter settings that are used within the script. Change these if you want.
-DATA_DIR = Path(__file__).resolve().parent / "ml-100k"
+DATA_DIR = Path(__file__).resolve().parent.parent / "ml-100k"
 FOLDS = ["u1", "u2", "u3", "u4", "u5"]
 TRIALS_PER_USER = 10
 QUIZ_SIZE = 10
