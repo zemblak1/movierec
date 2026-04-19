@@ -7,16 +7,18 @@ from sklearn.neighbors import NearestNeighbors
 # These are the main parameter settings that are used within the script. Change these if you want.
 DATA_DIR = Path(__file__).resolve().parent.parent / "ml-100k"
 FOLDS = ["u1", "u2", "u3", "u4", "u5"]
-TRIALS_PER_USER = 10
+
+#Change these specific parameters to find how the success rate changes!!
+TRIALS_PER_USER = 20
 QUIZ_SIZE = 10
-LIKE_THRESHOLD = 3
-TOP_K_RECOMMENDATIONS = 10
-BASE_SEED = 42
+LIKE_THRESHOLD = 4
+TOP_K_RECOMMENDATIONS = 20
+BASE_SEED = 20
 
 
 minimum_liked_movies = max(10, QUIZ_SIZE)
 
-print("Simulation Settings")
+print(f"Simulation Settings")
 print(f"Data directory: {DATA_DIR}")
 print(f"Folds: {', '.join(FOLDS)}")
 print(f"Trials per user: {TRIALS_PER_USER}")
@@ -24,10 +26,7 @@ print(f"Quiz size: {QUIZ_SIZE}")
 print(f"Like threshold: >= {LIKE_THRESHOLD}")
 print(f"Top recommendations kept: {TOP_K_RECOMMENDATIONS}")
 print(f"Base seed: {BASE_SEED}")
-print(
-    f"Eligible users need at least {minimum_liked_movies} liked movies in base "
-    f"and at least 1 liked movie in test."
-)
+print(f"Eligible users need at least {minimum_liked_movies} liked movies in base and at least 1 liked movie in test.")
 print()
 
 
@@ -111,7 +110,7 @@ for fold_index, fold_name in enumerate(FOLDS):
                 + (target_user_id * 1_000)
                 + trial_index
             )
-            seed_movies = liked_movies.sample(n=QUIZ_SIZE, random_state=trial_seed)
+            seed_movies = liked_movies.sample(n = QUIZ_SIZE, random_state = trial_seed)
             quiz_ratings = seed_movies.set_index("movie_id")["rating"].to_dict()
 
             # 5. Train nearest-neighbor search on only the quiz movie columns.
@@ -173,10 +172,10 @@ for fold_index, fold_name in enumerate(FOLDS):
     print(f"  executed trials: {fold_trials}")
     print(f"  successes: {fold_successes}")
     print(f"  failures: {fold_failures}")
-    print(f"  success rate: {fold_success_rate:.2%}")
     print(f"  misses: {fold_misses}")
     print(f"  no neighbor found: {fold_no_neighbor}")
     print(f"  no recommendations: {fold_no_recommendations}")
+    print(f"  success rate: {fold_success_rate:.2%}")
     print()
 
 
@@ -189,7 +188,7 @@ print(f"  eligible users: {overall_eligible_users}")
 print(f"  executed trials: {overall_trials}")
 print(f"  successes: {overall_successes}")
 print(f"  failures: {overall_failures}")
-print(f"  success rate: {overall_success_rate:.2%}")
 print(f"  misses: {overall_misses}")
 print(f"  no neighbor found: {overall_no_neighbor}")
 print(f"  no recommendations: {overall_no_recommendations}")
+print(f"  success rate: {overall_success_rate:.2%}")
