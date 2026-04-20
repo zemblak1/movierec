@@ -10,6 +10,7 @@ movie reccomendation algorithm
 
 **Repo Structure**
 
+```
 movierec/
 ├── backend/
 │   ├── server.py           
