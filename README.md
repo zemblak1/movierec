@@ -59,7 +59,7 @@ movierec/
    - npm install
    - npm run dev
      - This will output something like this:
-       - Local:     http://localhost:####/
+       - Local:     http://localhost:5000/
        - Network:   use --host to expose
        - press h + enter to show help
 
