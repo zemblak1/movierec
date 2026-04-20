@@ -1,5 +1,8 @@
-from pathlib import Path
+# Simulate a short movie quiz, match the quiz taker to a similar user,
+# and measure whether the resulting recommendations recover held-out likes.
 
+
+from pathlib import Path
 import pandas as pd
 from sklearn.neighbors import NearestNeighbors
 
@@ -10,7 +13,7 @@ FOLDS = ["u1", "u2", "u3", "u4", "u5"]
 
 #Change these specific parameters to find how the success rate changes!!
 TRIALS_PER_USER = 20
-QUIZ_SIZE = 10
+QUIZ_SIZE = 20
 LIKE_THRESHOLD = 4
 TOP_K_RECOMMENDATIONS = 20
 BASE_SEED = 20
@@ -18,6 +21,7 @@ BASE_SEED = 20
 
 minimum_liked_movies = max(10, QUIZ_SIZE)
 
+# Print the settings once so each run is easy to compare.
 print(f"Simulation Settings")
 print(f"Data directory: {DATA_DIR}")
 print(f"Folds: {', '.join(FOLDS)}")
@@ -38,6 +42,7 @@ overall_no_neighbor = 0
 overall_no_recommendations = 0
 
 
+# Run the same evaluation flow across each MovieLens train/test fold.
 for fold_index, fold_name in enumerate(FOLDS):
     base_path = DATA_DIR / f"{fold_name}.base"
     test_path = DATA_DIR / f"{fold_name}.test"
@@ -47,7 +52,7 @@ for fold_index, fold_name in enumerate(FOLDS):
     if not test_path.exists():
         raise FileNotFoundError(f"Missing test ratings file: {test_path}")
 
-    # 1. Load the ratings files for this fold.
+    # Load the train and test ratings for this fold.
     base_ratings = pd.read_csv(
         base_path,
         sep="\t",
@@ -62,20 +67,21 @@ for fold_index, fold_name in enumerate(FOLDS):
         usecols=["user_id", "movie_id", "rating"],
     )
 
-    # 2. Build the user-movie matrix from the training split.
+    # Build the user-movie matrix used for nearest-neighbor matching.
     user_movie_matrix = base_ratings.pivot_table(
         index="user_id",
         columns="movie_id",
         values="rating",
     ).fillna(0)
 
-    # 3. Keep only liked movies in each split.
+    # Keep only liked movies so the quiz and evaluation use positive feedback.
     liked_base_ratings = base_ratings.loc[base_ratings["rating"] >= LIKE_THRESHOLD]
     liked_test_ratings = test_ratings.loc[test_ratings["rating"] >= LIKE_THRESHOLD]
 
     liked_base_counts = liked_base_ratings.groupby("user_id").size()
     liked_test_counts = liked_test_ratings.groupby("user_id").size()
 
+    # Only evaluate users who have enough likes to form a quiz and a test target.
     eligible_user_ids = sorted(
         user_id
         for user_id in liked_base_counts.index
@@ -89,10 +95,12 @@ for fold_index, fold_name in enumerate(FOLDS):
     fold_no_neighbor = 0
     fold_no_recommendations = 0
 
+    # Try multiple quiz samples for each eligible user.
     for target_user_id in eligible_user_ids:
         liked_movies = liked_base_ratings.loc[
             liked_base_ratings["user_id"] == target_user_id
         ]
+        # Hold out liked test movies as the ground truth for success checks.
         hidden_like_ids = set(
             liked_test_ratings.loc[
                 liked_test_ratings["user_id"] == target_user_id,
@@ -103,7 +111,7 @@ for fold_index, fold_name in enumerate(FOLDS):
         for trial_index in range(TRIALS_PER_USER):
             fold_trials += 1
 
-            # 4. Randomly choose quiz movies from the target user's liked base movies.
+            # Draw one quiz from the target user's liked training movies.
             trial_seed = (
                 BASE_SEED
                 + (fold_index * 1_000_000)
@@ -113,7 +121,7 @@ for fold_index, fold_name in enumerate(FOLDS):
             seed_movies = liked_movies.sample(n = QUIZ_SIZE, random_state = trial_seed)
             quiz_ratings = seed_movies.set_index("movie_id")["rating"].to_dict()
 
-            # 5. Train nearest-neighbor search on only the quiz movie columns.
+            # Compare users only on the movies that appear in this quiz.
             subset_matrix = (
                 user_movie_matrix[list(quiz_ratings)]
                 .loc[lambda df: (df != 0).any(axis=1)]
@@ -127,13 +135,13 @@ for fold_index, fold_name in enumerate(FOLDS):
             model = NearestNeighbors(metric="cosine", algorithm="brute", n_neighbors=1)
             model.fit(subset_matrix)
 
-            # 6. Turn the quiz answers into a vector aligned with the quiz movie columns.
+            # Align the quiz answers with the subset matrix before searching.
             user_vector = pd.Series(quiz_ratings).reindex(subset_matrix.columns, fill_value=0)
             distances, indices = model.kneighbors(user_vector.to_frame().T, n_neighbors=1)
 
             matched_user_id = int(subset_matrix.index[indices[0, 0]])
 
-            # 7. Pull the matched user's liked movies and remove quiz movies.
+            # Recommend the matched user's liked movies that were not in the quiz.
             recommendations = (
                 base_ratings.loc[
                     (base_ratings["user_id"] == matched_user_id)
@@ -149,7 +157,7 @@ for fold_index, fold_name in enumerate(FOLDS):
                 fold_no_recommendations += 1
                 continue
 
-            # 8. Compare the recommendations against the user's liked movies in the test split.
+            # Count a hit when a recommendation matches a held-out liked movie.
             hits = set(recommendations["movie_id"]) & hidden_like_ids
 
             if hits:
@@ -157,6 +165,7 @@ for fold_index, fold_name in enumerate(FOLDS):
             else:
                 fold_misses += 1
 
+    # Summarize this fold before moving to the next one.
     fold_failures = fold_trials - fold_successes
     fold_success_rate = 0 if fold_trials == 0 else fold_successes / fold_trials
 
@@ -179,6 +188,7 @@ for fold_index, fold_name in enumerate(FOLDS):
     print()
 
 
+# Print the final totals across all folds.
 overall_failures = overall_trials - overall_successes
 overall_success_rate = 0 if overall_trials == 0 else overall_successes / overall_trials
 
