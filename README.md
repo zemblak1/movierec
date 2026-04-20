@@ -8,7 +8,37 @@ movie reccomendation algorithm
 **Aiden Zemblaku, and**
 **Sophia Ziegler**
 
+**Repo Structure**
 
+movierec/
+├── backend/
+│   ├── server.py           
+│   └── requirements.txt    # Python dependencies
+├── frontend/              
+├── model/
+│   └── knn.py              # KNN recommendation model
+├── ml-100k/                # MovieLens 100K dataset
+│   ├── u.data              # User ratings
+│   ├── u.item              # Movie metadata
+│   ├── u.user              # User demographics
+│   └── ...                 # more files etc
+├── simulation/
+│   ├── simulation.py       # Main simulation script
+│   └── initialsimulation.py
+├── webapp/                 # Frontend
+│   ├── src/
+│   │   ├── App.jsx
+│   │   ├── components/
+│   │   │   ├── MovieCard.jsx
+│   │   │   ├── ResultCard.jsx
+│   │   │   └── StarRating.jsx
+│   │   └── ...
+│   ├── public/
+│   ├── package.json
+│   └── vite.config.js
+├── main.ipynb              # Jupyter notebook (exploration/development)
+└── scratch.py
+```
 
 **How to start up the webpage!**
 
